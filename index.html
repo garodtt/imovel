@@ -50,37 +50,57 @@
             <h2 id="val-patrimonio">R$ 0,00</h2>
           </div>
           <div class="metric-card">
-            <span class="label">Receita Líquida (NOI)</span>
+            <span class="label">
+              Fluxo Mensal (NOI)
+              <i class="fa-solid fa-circle-info info-trigger" onclick="abrirInfo('noi')"></i>
+            </span>
             <h2 id="receita-mensal" class="text-green">R$ 0,00</h2>
           </div>
           <div class="metric-card">
-            <span class="label">Cap Rate Médio Anual</span>
-            <h2 id="yield-medio">0.00%</h2>
+            <span class="label">
+              Provisão I.R. (Est.)
+              <i class="fa-solid fa-circle-info info-trigger" onclick="abrirInfo('ir')"></i>
+            </span>
+            <h2 id="total-ir" class="text-red">R$ 0,00</h2>
           </div>
           <div class="metric-card">
-            <span class="label">Payback Médio</span>
-            <h2 id="payback-medio">0 meses</h2>
+            <span class="label">
+              Cap Rate Médio Anual
+              <i class="fa-solid fa-circle-info info-trigger" onclick="abrirInfo('caprate')"></i>
+            </span>
+            <h2 id="yield-medio">0.00%</h2>
           </div>
         </div>
 
         <div class="charts-layout">
           <div class="chart-box main-chart">
             <div class="chart-header">
-              <h3>Simulação de Rendimento Anual (Cenários)</h3>
-              <i class="fa-solid fa-circle-info" title="Otimista (100% ocupado), Realista (90% ocupado), Pessimista (70% ocupado)"></i>
+              <h3>Simulação de Rendimento Anual</h3>
+              <i class="fa-solid fa-circle-info info-trigger" onclick="abrirInfo('cenarios')"></i>
             </div>
             <canvas id="chartCenarios"></canvas>
           </div>
 
           <div class="chart-box side-chart">
-            <h3>Distribuição por Tipo</h3>
+            <div class="chart-header">
+              <h3>Distribuição por Tipo</h3>
+              <i class="fa-solid fa-circle-info info-trigger" onclick="abrirInfo('composicao')"></i>
+            </div>
             <canvas id="chartComposicao"></canvas>
           </div>
         </div>
 
         <div class="secondary-metrics">
           <div class="s-card">Total de Ativos: <strong id="total-ativos">0</strong></div>
-          <div class="s-card">Previsão Reajuste (Próx. 12m): <strong id="previsao-reajuste" class="text-green">R$ 0,00</strong></div>
+          <div class="s-card">
+            Payback Médio: <strong id="payback-medio">0 meses</strong>
+            <i class="fa-solid fa-circle-info info-trigger" onclick="abrirInfo('payback')"></i>
+          </div>
+          <div class="s-card">
+            Previsão Reajuste (12m): 
+            <strong id="previsao-reajuste" class="text-green">R$ 0,00</strong>
+            <i class="fa-solid fa-circle-info info-trigger" onclick="abrirInfo('reajuste')"></i>
+          </div>
         </div>
       </section>
 
@@ -102,19 +122,18 @@
 
       <section id="sec-contas" class="content-section hidden">
         <header class="section-header">
-          <h1>Contas e Despesas Mensais</h1>
+          <h1>Fluxo de Caixa Detalhado</h1>
         </header>
         <div class="table-container">
           <table id="tabela-contas">
             <thead>
               <tr>
                 <th>Imóvel</th>
-                <th>Aluguel</th>
-                <th>Condomínio</th>
-                <th>IPTU</th>
-                <th>Contas/Manut.</th>
-                <th>Financiamento</th>
-                <th>Fluxo Líquido</th>
+                <th>Receita</th>
+                <th>Despesas Fixas</th>
+                <th>Taxa Adm</th>
+                <th>I.R. Est.</th>
+                <th>Líquido Real</th>
               </tr>
             </thead>
             <tbody id="lista-contas-body"></tbody>
@@ -126,51 +145,137 @@
   </div>
 
   <div id="modal" class="modal hidden">
-    <div class="modal-content">
-      <div class="modal-header-info">
-        <h2 id="modal-titulo">Novo Imóvel</h2>
-        <div class="modal-nav">
-          <button class="tab-btn active" onclick="trocarAba(event, 'aba-basico')">1. Básico</button>
-          <button class="tab-btn" onclick="trocarAba(event, 'aba-aquisicao')">2. Aquisição</button>
-          <button class="tab-btn" onclick="trocarAba(event, 'aba-locacao')">3. Locação</button>
-          <button class="tab-btn" onclick="trocarAba(event, 'aba-despesas')">4. Despesas/Venda</button>
+  <div class="modal-content large">
+    <div class="modal-header-info">
+      <h2 id="modal-titulo">Gestão Completa do Imóvel</h2>
+      <div class="modal-nav">
+        <button class="tab-btn active" onclick="trocarAba(event, 'aba-geral')">1. Geral</button>
+        <button class="tab-btn" onclick="trocarAba(event, 'aba-financeiro')">2. Aquisição</button>
+        <button class="tab-btn" onclick="trocarAba(event, 'aba-locacao')">3. Locação</button>
+        <button class="tab-btn" onclick="trocarAba(event, 'aba-custos')">4. Custos/Venda</button>
+        <button class="tab-btn" onclick="trocarAba(event, 'aba-config')">5. Config/Alertas</button>
+      </div>
+    </div>
+
+    <form id="form-imovel">
+      <div id="aba-geral" class="tab-panel">
+        <div class="form-grid">
+          <div class="field full"><label>Nome/Identificador</label><input type="text" id="nome"></div>
+          <div class="field">
+            <label>Tipo</label>
+            <select id="tipo">
+              <option value="Apartamento">Apartamento</option>
+              <option value="Casa">Casa</option>
+              <option value="Comercial">Comercial</option>
+              <option value="Terreno">Terreno</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Status</label>
+            <select id="status">
+              <option value="vago">Vago</option>
+              <option value="alugado">Alugado</option>
+              <option value="reforma">Reforma</option>
+              <option value="venda">À Venda</option>
+            </select>
+          </div>
+          <div class="field full"><label>Endereço Completo</label><input type="text" id="endereco"></div>
+          <div class="field"><label>Cidade</label><input type="text" id="cidade"></div>
+          <div class="field"><label>Área Útil (m²)</label><input type="number" id="area_util"></div>
+          <div class="field"><label>Quartos</label><input type="number" id="quartos"></div>
+          <div class="field"><label>Banheiros</label><input type="number" id="banheiros"></div>
+          <div class="field"><label>Vagas</label><input type="number" id="vagas"></div>
         </div>
       </div>
 
-      <form id="form-imovel">
-        <div id="aba-basico" class="tab-panel">
-            <div class="form-grid">
-               <div class="field full">
-                 <label>Nome do Imóvel / ID</label>
-                 <input type="text" id="nome" required>
-               </div>
-               <div class="field">
-                 <label>Tipo</label>
-                 <select id="tipo">
-                   <option value="Apartamento">Apartamento</option>
-                   <option value="Casa">Casa</option>
-                   <option value="Comercial">Sala Comercial</option>
-                   <option value="Terreno">Terreno</option>
-                 </select>
-               </div>
-               <div class="field">
-                 <label>Status</label>
-                 <select id="status">
-                   <option value="vago">Vago</option>
-                   <option value="alugado">Alugado</option>
-                   <option value="reforma">Em Reforma</option>
-                   <option value="venda">À Venda</option>
-                 </select>
-               </div>
-            </div>
-         </div>
-         </form>
+      <div id="aba-financeiro" class="tab-panel hidden">
+        <div class="form-grid">
+          <div class="field"><label>Data da Compra</label><input type="date" id="data_compra"></div>
+          <div class="field"><label>Valor de Compra (R$)</label><input type="number" id="valor_compra"></div>
+          <div class="field"><label>ITBI / Escritura / Registro</label><input type="number" id="custos_extras_compra"></div>
+          <div class="field"><label>Comissão Compra</label><input type="number" id="comissao_compra"></div>
+          <hr class="full">
+          <div class="field">
+            <label>Pagamento</label>
+            <select id="forma_pagamento">
+              <option value="a_vista">À Vista</option>
+              <option value="financiado">Financiado</option>
+            </select>
+          </div>
+          <div class="field"><label>Valor Financiado</label><input type="number" id="valor_financiado"></div>
+          <div class="field"><label>Parcela Mensal</label><input type="number" id="parcela_financiamento"></div>
+          <div class="field"><label>Saldo Devedor</label><input type="number" id="saldo_devedor"></div>
+        </div>
+      </div>
+
+      <div id="aba-locacao" class="tab-panel hidden">
+        <div class="form-grid">
+          <div class="field"><label>Valor Aluguel</label><input type="number" id="valor_aluguel"></div>
+          <div class="field"><label>Início Contrato</label><input type="date" id="data_inicio_contrato"></div>
+          <div class="field"><label>Vencimento Contrato</label><input type="date" id="data_fim_contrato"></div>
+          <div class="field">
+            <label>Garantia</label>
+            <select id="tipo_garantia">
+              <option value="caucao">Caução</option>
+              <option value="seguro">Seguro Fiança</option>
+              <option value="fiador">Fiador</option>
+            </select>
+          </div>
+          <div class="field full"><label>Inquilino (Nome/CPF)</label><input type="text" id="inquilino_dados"></div>
+        </div>
+      </div>
+
+      <div id="aba-custos" class="tab-panel hidden">
+        <div class="form-grid">
+          <div class="field"><label>Condomínio (Mensal)</label><input type="number" id="condominio"></div>
+          <div class="field"><label>IPTU (Mensal)</label><input type="number" id="iptu_mensal"></div>
+          <div class="field"><label>Taxa Adm (%)</label><input type="number" id="taxa_adm_percentual"></div>
+          <div class="field"><label>Seguro Incêndio</label><input type="number" id="seguro_imovel"></div>
+          <hr class="full">
+          <div class="field"><label>Valor Venda Desejado</label><input type="number" id="valor_venda_desejado"></div>
+          <div class="field"><label>Reforma Inicial</label><input type="number" id="valor_reforma_inicial"></div>
+        </div>
+      </div>
+
+      <div id="aba-config" class="tab-panel hidden">
+        <div class="form-grid">
+          <div class="field"><label>Vacância Estimada (%)</label><input type="number" id="vacancia_estimada" value="10"></div>
+          <div class="field"><label>Alíquota IR Aluguel (%)</label><input type="number" id="aliquota_ir" value="15"></div>
+          <div class="field full">
+             <label>Alertas Ativos</label>
+             <div style="display:flex; gap:10px; color:var(--text-muted); font-size:0.8rem">
+               <input type="checkbox" checked> Vencimento Contrato
+               <input type="checkbox" checked> Reajuste Anual
+             </div>
+          </div>
+        </div>
+      </div>
+    </form>
+
+    <div class="modal-footer">
+      <button type="button" id="btn-excluir" class="btn-excluir hidden" onclick="excluirImovel()">Excluir</button>
+      <button type="button" class="btn-cancelar" onclick="fecharModal()">Cancelar</button>
+      <button type="button" class="btn-salvar" onclick="salvarImovel()">Salvar Patrimônio</button>
+    </div>
+  </div>
+</div>
 
       <div class="modal-footer">
         <button type="button" id="btn-excluir" class="btn-excluir hidden" onclick="excluirImovel()">Excluir</button>
         <button type="button" class="btn-cancelar" onclick="fecharModal()">Cancelar</button>
         <button type="button" class="btn-salvar" onclick="salvarImovel()">Salvar Patrimônio</button>
       </div>
+    </div>
+  </div>
+
+  <div id="modal-info" class="modal-info hidden" onclick="fecharInfo()">
+    <div class="modal-info-content" onclick="event.stopPropagation()">
+      <div class="info-header">
+        <i class="fa-solid fa-circle-question"></i>
+        <h3 id="info-titulo">Título</h3>
+      </div>
+      <p id="info-texto">Texto informativo.</p>
+      <button class="btn-info-close" onclick="fecharInfo()">Entendi</button>
     </div>
   </div>
 
