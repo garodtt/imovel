@@ -331,3 +331,196 @@ input, select {
 .text-red { color: var(--danger); }
 .font-bold { font-weight: 700; }
 hr.full { grid-column: span 2; border: 0; border-top: 1px solid var(--border); margin: 15px 0; }
+
+/* --- NOVAS FUNCIONALIDADES: RISCO E IMPOSTOS --- */
+
+/* Badge de Risco no Card */
+.risk-tag {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 4px;
+}
+
+/* Efeito de Alerta para Alto Risco (Imóveis Vagos/Reforma) */
+.property-card.border-risk {
+  border: 2px solid var(--danger);
+  position: relative;
+  animation: pulse-red 2s infinite;
+}
+
+/* Animação de pulsação para atrair atenção para a vacância */
+@keyframes pulse-red {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+/* Ajustes no Formulário da Modal */
+.field label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.modal-footer {
+  padding: 25px 40px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+  background: rgba(15, 23, 42, 0.2);
+}
+
+/* Botões da Modal */
+.btn-salvar {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn-salvar:disabled {
+  background: var(--border);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.btn-cancelar {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  padding: 12px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.btn-excluir {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--danger);
+  border: 1px solid var(--danger);
+  padding: 12px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-right: auto; /* Joga o botão para a esquerda */
+}
+
+.btn-excluir:hover {
+  background: var(--danger);
+  color: white;
+}
+
+/* Ajuste de scroll na modal para telas menores */
+.tab-panel {
+  max-height: 50vh;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+/* Custom Scrollbar para a Modal */
+.tab-panel::-webkit-scrollbar { width: 6px; }
+.tab-panel::-webkit-scrollbar-track { background: transparent; }
+.tab-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+/* --- ESTILIZAÇÃO DO POP-UP DE INFORMAÇÃO (TOOLTIP MODAL) --- */
+
+/* Ícone de gatilho */
+.info-trigger {
+  font-size: 0.85rem;
+  color: var(--primary);
+  cursor: pointer;
+  margin-left: 6px;
+  opacity: 0.7;
+  transition: all 0.2s ease;
+  vertical-align: middle;
+}
+
+.info-trigger:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+/* Container da Modal de Info */
+.modal-info {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.7);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000; /* Acima da modal de cadastro */
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Conteúdo da Modal de Info */
+.modal-info-content {
+  background: var(--bg-surface);
+  width: 100%;
+  max-width: 420px;
+  padding: 30px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+  text-align: center;
+}
+
+.info-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.info-header i {
+  font-size: 2.5rem;
+  color: var(--primary);
+}
+
+.info-header h3 {
+  font-size: 1.4rem;
+  color: #fff;
+  font-weight: 700;
+}
+
+#info-texto {
+  color: var(--text-muted);
+  line-height: 1.6;
+  font-size: 1rem;
+  margin-bottom: 25px;
+  white-space: pre-line; /* Mantém as quebras de linha do JS */
+}
+
+/* Botão de Fechar */
+.btn-info-close {
+  background: var(--bg-card);
+  color: var(--text-main);
+  border: 1px solid var(--border);
+  padding: 12px 30px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.2s;
+}
+
+.btn-info-close:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+/* Animação simples */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
