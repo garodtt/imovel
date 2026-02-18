@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Patrimônio Pro - Gestão Imobiliária</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <aside class="sidebar">
+      <div class="logo">
+        <i class="fa-solid fa-building-columns"></i>
+        <span>Imóveis<strong>AI</strong></span>
+      </div>
+      
+      <nav>
+        <button onclick="navegar('dash')" class="nav-btn active" id="btn-dash">
+          <i class="fa-solid fa-chart-line"></i> Dashboard
+        </button>
+        <button onclick="navegar('lista')" class="nav-btn" id="btn-lista">
+          <i class="fa-solid fa-house-chimney"></i> Meus Imóveis
+        </button>
+        <button onclick="navegar('contas')" class="nav-btn" id="btn-contas">
+          <i class="fa-solid fa-file-invoice-dollar"></i> Contas e Fluxo
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="btn-novo-imovel" onclick="abrirModal()">
+          <i class="fa-solid fa-plus"></i> Novo Imóvel
+        </button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      
+      <section id="sec-dash" class="content-section">
+        <header class="section-header">
+          <h1>Resumo do Patrimônio</h1>
+        </header>
+
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <span class="label">Valor Patrimonial</span>
+            <h2 id="val-patrimonio">R$ 0,00</h2>
+          </div>
+          <div class="metric-card">
+            <span class="label">Receita Líquida (NOI)</span>
+            <h2 id="receita-mensal" class="text-green">R$ 0,00</h2>
+          </div>
+          <div class="metric-card">
+            <span class="label">Cap Rate Médio Anual</span>
+            <h2 id="yield-medio">0.00%</h2>
+          </div>
+          <div class="metric-card">
+            <span class="label">Payback Médio</span>
+            <h2 id="payback-medio">0 meses</h2>
+          </div>
+        </div>
+
+        <div class="charts-layout">
+          <div class="chart-box main-chart">
+            <div class="chart-header">
+              <h3>Simulação de Rendimento Anual (Cenários)</h3>
+              <i class="fa-solid fa-circle-info" title="Otimista (100% ocupado), Realista (90% ocupado), Pessimista (70% ocupado)"></i>
+            </div>
+            <canvas id="chartCenarios"></canvas>
+          </div>
+
+          <div class="chart-box side-chart">
+            <h3>Distribuição por Tipo</h3>
+            <canvas id="chartComposicao"></canvas>
+          </div>
+        </div>
+
+        <div class="secondary-metrics">
+          <div class="s-card">Total de Ativos: <strong id="total-ativos">0</strong></div>
+          <div class="s-card">Previsão Reajuste (Próx. 12m): <strong id="previsao-reajuste" class="text-green">R$ 0,00</strong></div>
+        </div>
+      </section>
+
+      <section id="sec-lista" class="content-section hidden">
+        <header class="section-header">
+          <h1>Meus Imóveis</h1>
+          <div class="filtros">
+            <select id="filtro-status" onchange="carregarDados()">
+              <option value="todos">Todos os Status</option>
+              <option value="alugado">Alugados</option>
+              <option value="vago">Vagos</option>
+              <option value="reforma">Em Reforma</option>
+              <option value="venda">À Venda</option>
+            </select>
+          </div>
+        </header>
+        <div id="grid-imoveis" class="property-grid"></div>
+      </section>
+
+      <section id="sec-contas" class="content-section hidden">
+        <header class="section-header">
+          <h1>Contas e Despesas Mensais</h1>
+        </header>
+        <div class="table-container">
+          <table id="tabela-contas">
+            <thead>
+              <tr>
+                <th>Imóvel</th>
+                <th>Aluguel</th>
+                <th>Condomínio</th>
+                <th>IPTU</th>
+                <th>Contas/Manut.</th>
+                <th>Financiamento</th>
+                <th>Fluxo Líquido</th>
+              </tr>
+            </thead>
+            <tbody id="lista-contas-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <div id="modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header-info">
+        <h2 id="modal-titulo">Novo Imóvel</h2>
+        <div class="modal-nav">
+          <button class="tab-btn active" onclick="trocarAba(event, 'aba-basico')">1. Básico</button>
+          <button class="tab-btn" onclick="trocarAba(event, 'aba-aquisicao')">2. Aquisição</button>
+          <button class="tab-btn" onclick="trocarAba(event, 'aba-locacao')">3. Locação</button>
+          <button class="tab-btn" onclick="trocarAba(event, 'aba-despesas')">4. Despesas/Venda</button>
+        </div>
+      </div>
+
+      <form id="form-imovel">
+        <div id="aba-basico" class="tab-panel">
+            <div class="form-grid">
+               <div class="field full">
+                 <label>Nome do Imóvel / ID</label>
+                 <input type="text" id="nome" required>
+               </div>
+               <div class="field">
+                 <label>Tipo</label>
+                 <select id="tipo">
+                   <option value="Apartamento">Apartamento</option>
+                   <option value="Casa">Casa</option>
+                   <option value="Comercial">Sala Comercial</option>
+                   <option value="Terreno">Terreno</option>
+                 </select>
+               </div>
+               <div class="field">
+                 <label>Status</label>
+                 <select id="status">
+                   <option value="vago">Vago</option>
+                   <option value="alugado">Alugado</option>
+                   <option value="reforma">Em Reforma</option>
+                   <option value="venda">À Venda</option>
+                 </select>
+               </div>
+            </div>
+         </div>
+         </form>
+
+      <div class="modal-footer">
+        <button type="button" id="btn-excluir" class="btn-excluir hidden" onclick="excluirImovel()">Excluir</button>
+        <button type="button" class="btn-cancelar" onclick="fecharModal()">Cancelar</button>
+        <button type="button" class="btn-salvar" onclick="salvarImovel()">Salvar Patrimônio</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js"></script>
+</body>
+</html>
