@@ -524,3 +524,52 @@ hr.full { grid-column: span 2; border: 0; border-top: 1px solid var(--border); m
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+.analysis-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.analysis-card.highlight {
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px dashed var(--primary);
+    padding: 20px;
+    border-radius: 16px;
+    text-align: center;
+}
+
+.analysis-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.analysis-box {
+    background: var(--bg-deep);
+    padding: 15px;
+    border-radius: 12px;
+    text-align: center;
+    border: 1px solid var(--border);
+}
+
+.analysis-box span {
+    display: block;
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-top: 5px;
+}
+
+.vacancy-alert {
+    background: rgba(239, 68, 68, 0.05);
+    padding: 20px;
+    border-radius: 16px;
+    border-left: 4px solid var(--danger);
+}
+
+.info-note {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 10px;
+    font-style: italic;
+}
