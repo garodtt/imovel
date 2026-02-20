@@ -10,7 +10,7 @@ let idEdicao = null;
 let chartCenarios = null;
 let chartComposicao = null;
 
-// --- NOVO: DICIONÁRIO DE INFORMAÇÕES ATUALIZADO ---
+// --- DICIONÁRIO DE INFORMAÇÕES ---
 const explicacoes = {
     noi: { titulo: "Fluxo Mensal (NOI)", texto: "Receita Operacional Líquida: Aluguel menos despesas fixas e taxa de ADM, antes do IR." },
     ir: { titulo: "Imposto de Renda Est.", texto: "Cálculo baseado na tabela progressiva mensal. Isento até R$ 2.259, chegando a 27,5% sobre valores maiores." },
@@ -23,7 +23,6 @@ const explicacoes = {
 
 // --- FUNÇÕES DE CÁLCULO FINANCEIRO ---
 
-// Tabela Progressiva IR 2026 (Exemplo aproximado)
 function calcularIR(valorBase) {
     if (valorBase <= 2259) return 0;
     if (valorBase <= 2826.65) return (valorBase * 0.075) - 169.44;
@@ -35,7 +34,42 @@ function calcularIR(valorBase) {
 function calcularScoreRisco(status, tipo) {
     if (status === 'vago') return 100;
     if (status === 'reforma') return 70;
-    return tipo === 'Comercial' ? 30 : 15; // Comercial costuma ter vacância maior
+    return tipo === 'Comercial' ? 30 : 15;
+}
+
+// --- NOVO: LÓGICA DE INTELIGÊNCIA (VENDER VS ALUGAR) ---
+window.calcularInteligencia = function() {
+    const valorMercado = Number(document.getElementById("valor_venda_desejado").value) || Number(document.getElementById("valor_compra").value) || 0;
+    const aluguelBruto = Number(document.getElementById("valor_aluguel").value) || 0;
+    const condominio = Number(document.getElementById("condominio").value) || 0;
+    const iptu = Number(document.getElementById("iptu_mensal").value) || 0;
+    const taxaAdm = aluguelBruto * (Number(document.getElementById("taxa_adm_percentual").value) / 100);
+    
+    // Cálculo do IR sobre a base tributável (Aluguel - Deduções fixas permitidas)
+    const baseIR = Math.max(0, aluguelBruto - condominio - iptu);
+    const irMensal = calcularIR(baseIR); 
+
+    const aluguelLiquido = aluguelBruto - condominio - iptu - taxaAdm - irMensal;
+    const rentabilidadeAluguel = valorMercado > 0 ? (aluguelLiquido / valorMercado) * 100 : 0;
+
+    // Benchmark: CDI atual estimado em 0.85% ao mês (ajustável)
+    const taxaCDI = 0.85; 
+    const rendimentoVendaCDI = valorMercado * (taxaCDI / 100);
+
+    const custoDiretoVago = condominio + iptu;
+    const custoOportunidadeTotal = custoDiretoVago + aluguelLiquido + rendimentoVendaCDI;
+
+    // Atualização da UI
+    document.getElementById("calc-rent-aluguel").innerText = `${rentabilidadeAluguel.toFixed(2)}% am`;
+    document.getElementById("custo-vago-direto").innerText = `R$ ${custoDiretoVago.toLocaleString('pt-BR')}`;
+    document.getElementById("custo-vago-total").innerText = `R$ ${custoOportunidadeTotal.toLocaleString('pt-BR')}`;
+
+    const veredito = document.getElementById("veredito-texto");
+    if (rentabilidadeAluguel > taxaCDI) {
+        veredito.innerHTML = `<b style="color:#22c55e">MANTER PARA ALUGUEL.</b> Sua rentabilidade líquida (${rentabilidadeAluguel.toFixed(2)}%) supera o CDI médio (${taxaCDI}%).`;
+    } else {
+        veredito.innerHTML = `<b style="color:#ef4444">VANTAGEM NA VENDA.</b> O aluguel rende menos que o CDI. Valor estimado de liquidez: R$ ${rendimentoVendaCDI.toLocaleString('pt-BR')}/mês no CDI.`;
+    }
 }
 
 // --- FUNÇÕES DE UI ---
@@ -64,7 +98,7 @@ window.abrirModal = () => {
     document.getElementById("modal-titulo").innerText = "Novo Imóvel";
     document.getElementById("btn-excluir").classList.add("hidden");
     document.getElementById("modal").classList.remove("hidden");
-    trocarAba(null, 'aba-basico');
+    trocarAba(null, 'aba-geral');
 };
 
 window.fecharModal = () => document.getElementById("modal").classList.add("hidden");
@@ -74,36 +108,58 @@ window.trocarAba = (event, abaId) => {
     document.getElementById(abaId).classList.remove('hidden');
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     if (event) event.currentTarget.classList.add('active');
+
+    // Se clicar na aba de inteligência, calcula os dados
+    if (abaId === 'aba-inteligencia') calcularInteligencia();
 };
 
 // --- OPERAÇÕES DB ---
 window.salvarImovel = async function() {
+    const btn = document.querySelector(".btn-salvar");
+    btn.disabled = true;
+    btn.innerText = "Salvando...";
+
     const imovel = {
         nome: document.getElementById("nome").value,
         tipo: document.getElementById("tipo").value,
         status: document.getElementById("status").value,
         endereco: document.getElementById("endereco").value,
+        cidade: document.getElementById("cidade").value,
         area_util: Number(document.getElementById("area_util").value),
+        quartos: Number(document.getElementById("quartos").value),
+        banheiros: Number(document.getElementById("banheiros").value),
+        vagas: Number(document.getElementById("vagas").value),
         
         // Aquisição
+        data_compra: document.getElementById("data_compra").value,
         valor_compra: Number(document.getElementById("valor_compra").value),
         custos_extras_compra: Number(document.getElementById("custos_extras_compra").value),
+        comissao_compra: Number(document.getElementById("comissao_compra").value),
         forma_pagamento: document.getElementById("forma_pagamento").value,
+        valor_financiado: Number(document.getElementById("valor_financiado").value),
         parcela_financiamento: Number(document.getElementById("parcela_financiamento").value),
+        saldo_devedor: Number(document.getElementById("saldo_devedor").value),
         
         // Locação
         valor_aluguel: Number(document.getElementById("valor_aluguel").value),
         data_inicio_contrato: document.getElementById("data_inicio_contrato").value,
         data_fim_contrato: document.getElementById("data_fim_contrato").value,
+        tipo_garantia: document.getElementById("tipo_garantia").value,
+        inquilino_dados: document.getElementById("inquilino_dados").value,
         
-        // Custos
+        // Custos e Venda
         condominio: Number(document.getElementById("condominio").value),
         iptu_mensal: Number(document.getElementById("iptu_mensal").value),
         taxa_adm_percentual: Number(document.getElementById("taxa_adm_percentual").value),
-        valor_reforma_inicial: Number(document.getElementById("valor_reforma_inicial").value)
+        seguro_imovel: Number(document.getElementById("seguro_imovel").value),
+        valor_venda_desejado: Number(document.getElementById("valor_venda_desejado").value),
+        valor_reforma_inicial: Number(document.getElementById("valor_reforma_inicial").value),
+        
+        // Config
+        vacancia_estimada: Number(document.getElementById("vacancia_estimada").value),
+        aliquota_ir: Number(document.getElementById("aliquota_ir").value)
     };
 
-    // ... lógica de insert/update do Supabase (idEdicao)
     const { error } = idEdicao 
         ? await db.from("imoveis").update(imovel).eq("id", idEdicao)
         : await db.from("imoveis").insert([imovel]);
@@ -111,7 +167,11 @@ window.salvarImovel = async function() {
     btn.disabled = false;
     btn.innerText = "Salvar Patrimônio";
 
-    if (error) return alert("Erro ao salvar.");
+    if (error) {
+        console.error(error);
+        return alert("Erro ao salvar no banco de dados.");
+    }
+    
     fecharModal();
     carregarDados();
 };
@@ -120,25 +180,44 @@ window.prepararEdicao = async function(id) {
     const { data: i } = await db.from("imoveis").select("*").eq("id", id).single();
     idEdicao = id;
     
-    // Preenche todos os campos
-    document.getElementById("nome").value = i.nome || '';
-    document.getElementById("status").value = i.status || 'vago';
-    document.getElementById("valor_compra").value = i.valor_compra || 0;
-    document.getElementById("valor_aluguel").value = i.valor_aluguel || 0;
-    document.getElementById("condominio").value = i.condominio || 0;
-    // ... adicione todos os outros campos aqui seguindo o mesmo padrão
+    // Preenche todos os campos (Mapeamento completo)
+    const campos = [
+        "nome", "tipo", "status", "endereco", "cidade", "area_util", "quartos", "banheiros", "vagas",
+        "data_compra", "valor_compra", "custos_extras_compra", "comissao_compra", "forma_pagamento",
+        "valor_financiado", "parcela_financiamento", "saldo_devedor", "valor_aluguel", 
+        "data_inicio_contrato", "data_fim_contrato", "tipo_garantia", "inquilino_dados",
+        "condominio", "iptu_mensal", "taxa_adm_percentual", "seguro_imovel", 
+        "valor_venda_desejado", "valor_reforma_inicial", "vacancia_estimada", "aliquota_ir"
+    ];
+
+    campos.forEach(campo => {
+        const el = document.getElementById(campo);
+        if (el) el.value = i[campo] || (el.type === 'number' ? 0 : '');
+    });
     
+    document.getElementById("modal-titulo").innerText = "Editar Imóvel";
+    document.getElementById("btn-excluir").classList.remove("hidden");
     document.getElementById("modal").classList.remove("hidden");
+    trocarAba(null, 'aba-geral');
 };
+
+window.excluirImovel = async function() {
+    if (!confirm("Tem certeza que deseja remover este imóvel do patrimônio?")) return;
+    const { error } = await db.from("imoveis").delete().eq("id", idEdicao);
+    if (error) alert("Erro ao excluir.");
+    fecharModal();
+    carregarDados();
+};
+
 // --- GRÁFICOS ---
 function renderizarGraficos(imoveis, lucroMensal, custosFixosVagos) {
     const ctxCenarios = document.getElementById('chartCenarios').getContext('2d');
     const ctxComposicao = document.getElementById('chartComposicao').getContext('2d');
 
     const dadosCenarios = [
-        (lucroMensal * 8) - (custosFixosVagos * 4),   // Pessimista
-        (lucroMensal * 10.5) - (custosFixosVagos * 1.5), // Realista
-        lucroMensal * 12 // Otimista
+        (lucroMensal * 8) - (custosFixosVagos * 4), 
+        (lucroMensal * 10.5) - (custosFixosVagos * 1.5),
+        lucroMensal * 12 
     ];
 
     if (chartCenarios) chartCenarios.destroy();
@@ -179,23 +258,25 @@ async function carregarDados() {
     let totPatrimonio = 0, totInvestido = 0, totLucroMensal = 0, totIR = 0, custosVagos = 0;
 
     imoveis.forEach(i => {
-        const custoAquisicao = (i.valor_compra || 0) + (i.itbi || 0) + (i.valor_reforma_inicial || 0);
+        const custoAquisicao = (i.valor_compra || 0) + (i.custos_extras_compra || 0) + (i.valor_reforma_inicial || 0);
         const receita = i.valor_aluguel || 0;
-        const despesasFixas = (i.condominio || 0) + (i.iptu_mensal || 0) + (i.manutencao_media || 0) + (i.parcela_financiamento || 0);
+        const despesasFixas = (i.condominio || 0) + (i.iptu_mensal || 0) + (i.parcela_financiamento || 0);
         const taxaAdm = receita * ((i.taxa_adm_percentual || 0) / 100);
+        
+        const baseIR = Math.max(0, receita - (i.condominio || 0) - (i.iptu_mensal || 0));
+        const ir = i.status === 'alugado' ? calcularIR(baseIR) : 0;
+        
         const fluxoBruto = receita - despesasFixas - taxaAdm;
-        const ir = i.status === 'alugado' ? calcularIR(receita) : 0;
         const fluxoLiquidoReal = fluxoBruto - ir;
         const scoreRisco = calcularScoreRisco(i.status, i.tipo);
 
-        totPatrimonio += (i.valor_compra || 0);
+        totPatrimonio += (i.valor_venda_desejado || i.valor_compra || 0);
         totInvestido += custoAquisicao;
         totLucroMensal += fluxoBruto;
         totIR += ir;
         custosVagos += (i.condominio || 0) + (i.iptu_mensal || 0);
 
         if (filtroStatus === "todos" || i.status === filtroStatus) {
-            // Render Card
             grid.innerHTML += `
                 <div class="property-card ${scoreRisco > 50 ? 'border-risk' : ''}">
                     <div class="card-header">
@@ -211,7 +292,6 @@ async function carregarDados() {
                     </div>
                 </div>`;
             
-            // Render Tabela
             tabela.innerHTML += `
                 <tr>
                     <td>${i.nome}</td>
@@ -224,7 +304,6 @@ async function carregarDados() {
         }
     });
 
-    // Atualizar Dashboard
     document.getElementById("val-patrimonio").innerText = `R$ ${totPatrimonio.toLocaleString('pt-BR')}`;
     document.getElementById("receita-mensal").innerText = `R$ ${totLucroMensal.toLocaleString('pt-BR')}`;
     document.getElementById("total-ir").innerText = `R$ ${totIR.toLocaleString('pt-BR')}`;
